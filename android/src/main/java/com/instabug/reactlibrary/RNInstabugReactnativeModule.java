@@ -143,15 +143,15 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
 
         if (activity != null) {
             if (InstabugInternalTrackingDelegate.getInstance().getCurrentActivity() == null) {
-                    handelActivityResumed(activity);
+                handelActivityResumed(activity);
             }
         }
 
         try {
-               Instabug.invoke();
-               Instabug.dismiss();
+            Instabug.invoke();
+            Instabug.dismiss();
         } catch (Exception e) {
-              e.printStackTrace();
+            e.printStackTrace();
         }
 
         //init placHolders
@@ -943,13 +943,21 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             Runnable preInvocationRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    preInvocationHandler.invoke();
+                    try {
+                        preInvocationHandler.invoke();
+                    } catch (java.lang.Exception exception) {
+                        exception.printStackTrace();
+                    }
                 }
             };
             mInstabug.setPreInvocation(preInvocationRunnable);
-        } catch (java.lang.Exception exception) {
+        } catch (
+                java.lang.Exception exception)
+
+        {
             exception.printStackTrace();
         }
+
     }
 
     /**
@@ -967,7 +975,11 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             Runnable preSendingRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    preSendingHandler.invoke();
+                    try {
+                        preSendingHandler.invoke();
+                    } catch (java.lang.Exception exception) {
+                        exception.printStackTrace();
+                    }
                 }
             };
             mInstabug.setPreSendingRunnable(preSendingRunnable);
@@ -991,7 +1003,11 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             mInstabug.setOnSdkDismissedCallback(new OnSdkDismissedCallback() {
                 @Override
                 public void onSdkDismissed(DismissType issueState, Bug.Type bugType) {
-                    postInvocationHandler.invoke();
+                    try {
+                        postInvocationHandler.invoke();
+                    } catch (java.lang.Exception exception) {
+                        exception.printStackTrace();
+                    }
                 }
             });
 
