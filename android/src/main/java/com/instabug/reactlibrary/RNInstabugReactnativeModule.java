@@ -2,6 +2,7 @@ package com.instabug.reactlibrary;
 
 import android.app.Application;
 import android.net.Uri;
+import android.app.Activity;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
