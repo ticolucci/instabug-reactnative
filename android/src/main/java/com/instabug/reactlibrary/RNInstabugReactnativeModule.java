@@ -147,6 +147,13 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             }
         }
 
+        try {
+               Instabug.invoke();
+               Instabug.dismiss();
+        } catch (Exception e) {
+              e.printStackTrace();
+        }
+
         //init placHolders
         placeHolders = new InstabugCustomTextPlaceHolder();
 
