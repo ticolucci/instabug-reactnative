@@ -26,10 +26,14 @@ import com.instabug.library.user.UserEventParam;
 import com.instabug.library.OnSdkDismissedCallback;
 import com.instabug.library.bugreporting.model.Bug;
 import com.instabug.survey.InstabugSurvey;
+import com.instabug.library.tracking.InstabugInternalTrackingDelegate;
+
 
 import com.instabug.reactlibrary.utils.ArrayUtil;
 import com.instabug.reactlibrary.utils.MapUtil;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
@@ -134,9 +138,45 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
                 .setIntroMessageEnabled(false)
                 .setInvocationEvent(getInvocationEventById(invocationEvent))
                 .build();
+        final Activity activity = getCurrentActivity();
+
+        if (activity != null) {
+            if (InstabugInternalTrackingDelegate.getInstance().getCurrentActivity() == null) {
+                    handelActivityResumed(activity);
+            }
+        }
+
         //init placHolders
         placeHolders = new InstabugCustomTextPlaceHolder();
 
+    }
+
+    private void handelActivityResumed(Activity activity) {
+        try {
+            Class myClass = Class.forName("com.instabug.library.tracking" +
+                    ".InstabugInternalTrackingDelegate");
+            Method method = getMethod(myClass, "handleActivityResumedEvent");
+            if (method != null) {
+                method.invoke(InstabugInternalTrackingDelegate.getInstance(), activity);
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Method getMethod(Class clazz, String methodName) {
+        final Method[] methods = clazz.getDeclaredMethods();
+        for (Method method : methods) {
+            if (method.getName().equals(methodName)) {
+                method.setAccessible(true);
+                return method;
+            }
+        }
+        return null;
     }
 
     /**
