@@ -9,5 +9,4 @@ Pod::Spec.new do |s|
   s.source_files = 'ios/RNInstabug/*'
   s.platform     = :ios, "8.0"
   s.dependency 'Instabug'
-  s.dependency 'React'
 end
