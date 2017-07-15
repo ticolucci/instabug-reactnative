@@ -1,5 +1,6 @@
 package com.instabug.reactlibrary;
 
+import android.content.pm.ApplicationInfo;
 import android.app.Application;
 import android.net.Uri;
 
@@ -110,6 +111,7 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
     private Instabug mInstabug;
     private InstabugInvocationEvent invocationEvent;
     private InstabugCustomTextPlaceHolder placeHolders;
+    private boolean isDebuggable;
 
     /**
      * Instantiates a new Rn instabug reactnative module.
@@ -122,9 +124,13 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
         super(reactContext);
         this.androidApplication = androidApplication;
         this.mInstabug = mInstabug;
+        isDebuggable = (0 != (this.androidApplication.getApplicationInfo().flags &= ApplicationInfo
+                .FLAG_DEBUGGABLE));
         try {
-            Instabug.invoke();
-            Instabug.dismiss();
+            if (!isDebuggable) {
+                Instabug.invoke();
+                Instabug.dismiss();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
