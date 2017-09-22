@@ -6,6 +6,9 @@
 
 #import "InstabugReactBridge.h"
 #import <Instabug/Instabug.h>
+#import <asl.h>
+#import <React/RCTLog.h>
+#import <os/log.h>
 
 @implementation InstabugReactBridge
 
@@ -28,6 +31,8 @@ RCT_EXPORT_MODULE(Instabug)
 
 RCT_EXPORT_METHOD(startWithToken:(NSString *)token invocationEvent:(IBGInvocationEvent)invocationEvent) {
     [Instabug startWithToken:token invocationEvent:invocationEvent];
+    RCTAddLogFunction(InstabugReactLogFunction);
+    RCTSetLogThreshold(RCTLogLevelInfo);
     [Instabug setCrashReportingEnabled:NO];
     [Instabug setNetworkLoggingEnabled:NO];
 }
@@ -224,11 +229,11 @@ RCT_EXPORT_METHOD(identifyUserWithEmail:(NSString *)email name:(NSString *)name)
     [Instabug identifyUserWithEmail:email name:name];
 }
 
-RCT_EXPORT_METHOD(logout) {
+RCT_EXPORT_METHOD(logOut) {
     [Instabug logOut];
 }
 
-RCT_EXPORT_METHOD(setPostSendingDialogEnabled:(BOOL)isPostSendingDialogEnabled) {
+RCT_EXPORT_METHOD(setSuccessDialogEnabled:(BOOL)isPostSendingDialogEnabled) {
     [Instabug setPostSendingDialogEnabled:isPostSendingDialogEnabled];
 }
 
@@ -236,7 +241,7 @@ RCT_EXPORT_METHOD(setReportCategories:(NSArray<NSString *> *)titles iconNames:(N
     [Instabug setReportCategoriesWithTitles:titles iconNames:names];
 }
 
-RCT_EXPORT_METHOD(setUserAttribute:(NSString *)value withKey:(NSString *)key) {
+RCT_EXPORT_METHOD(setUserAttribute:(NSString *)key withValue:(NSString *)value) {
     [Instabug setUserAttribute:value withKey:key];
 }
 
@@ -350,25 +355,25 @@ RCT_EXPORT_METHOD(isRunningLive:(RCTResponseSenderBlock)callback) {
               @"invocationEventTwoFingersSwipeLeft": @(IBGInvocationEventTwoFingersSwipeLeft),
               @"invocationEventRightEdgePan": @(IBGInvocationEventRightEdgePan),
               @"invocationEventFloatingButton": @(IBGInvocationEventFloatingButton),
-              
+
               @"invocationModeNA": @(IBGInvocationModeNA),
               @"invocationModeNewBug": @(IBGInvocationModeNewBug),
               @"invocationModeNewFeedback": @(IBGInvocationModeNewFeedback),
               @"invocationModeNewChat": @(IBGInvocationModeNewChat),
               @"invocationModeChatsList": @(IBGInvocationModeChatsList),
-              
+
               @"dismissTypeSubmit": @(IBGDismissTypeSubmit),
               @"dismissTypeCancel": @(IBGDismissTypeCancel),
               @"dismissTypeAddAtttachment": @(IBGDismissTypeAddAttachment),
-              
+
               @"reportTypeBug": @(IBGReportTypeBug),
               @"reportTypeFeedback": @(IBGReportTypeFeedback),
-              
+
               @"rectMinXEdge": @(CGRectMinXEdge),
               @"rectMinYEdge": @(CGRectMinYEdge),
               @"rectMaxXEdge": @(CGRectMaxXEdge),
               @"rectMaxYEdge": @(CGRectMaxYEdge),
-              
+
               @"localeArabic": @(IBGLocaleArabic),
               @"localeChineseSimplified": @(IBGLocaleChineseSimplified),
               @"localeChineseTraditional": @(IBGLocaleChineseTraditional),
@@ -386,10 +391,10 @@ RCT_EXPORT_METHOD(isRunningLive:(RCTResponseSenderBlock)callback) {
               @"localeSpanish": @(IBGLocaleSpanish),
               @"localeSwedish": @(IBGLocaleSwedish),
               @"localeTurkish": @(IBGLocaleTurkish),
-              
+
               @"colorThemeLight": @(IBGColorThemeLight),
               @"colorThemeDark": @(IBGColorThemeDark),
-              
+
               @"shakeHint": @(IBGStringShakeHint),
               @"swipeHint": @(IBGStringSwipeHint),
               @"edgeSwipeStartHint": @(IBGStringEdgeSwipeStartHint),
@@ -431,6 +436,44 @@ RCT_EXPORT_METHOD(isRunningLive:(RCTResponseSenderBlock)callback) {
               @"surveySubmitTitle": @(kIBGStringSurveySubmitTitle),
               @"videPressRecord": @(kIBGStringVideoPressRecordTitle)
               };
+};
+
++ (BOOL)iOSVersionIsLessThan:(NSString *)iOSVersion {
+    return [iOSVersion compare:[UIDevice currentDevice].systemVersion options:NSNumericSearch] == NSOrderedDescending;
+};
+
+RCTLogFunction InstabugReactLogFunction = ^(
+                                               RCTLogLevel level,
+                                               __unused RCTLogSource source,
+                                               NSString *fileName,
+                                               NSNumber *lineNumber,
+                                               NSString *message
+                                               )
+{
+    NSString *log = RCTFormatLog([NSDate date], level, fileName, lineNumber, message);
+    NSString *compeleteLog = [NSString stringWithFormat:@"Instabug - REACT LOG: %@", log];
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        va_list arg_list;
+        
+        switch(level) {
+            case RCTLogLevelTrace:
+                IBGNSLogWithLevel(compeleteLog, arg_list, IBGLogLevelTrace);
+                break;
+            case RCTLogLevelInfo:
+                IBGNSLogWithLevel(compeleteLog, arg_list, IBGLogLevelInfo);
+                break;
+            case RCTLogLevelWarning:
+                IBGNSLogWithLevel(compeleteLog, arg_list, IBGLogLevelWarning);
+                break;
+            case RCTLogLevelError:
+                IBGNSLogWithLevel(compeleteLog, arg_list, IBGLogLevelError);
+                break;
+            case RCTLogLevelFatal:
+                IBGNSLogWithLevel(compeleteLog, arg_list, IBGLogLevelFatal);
+                break;
+        }
+    });
 };
 
 @end

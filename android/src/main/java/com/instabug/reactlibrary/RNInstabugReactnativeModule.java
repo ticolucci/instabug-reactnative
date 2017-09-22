@@ -4,7 +4,9 @@ import android.app.Application;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.Nullable;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -16,6 +18,7 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.bridge.Callback;
 
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.instabug.library.Instabug;
 import com.instabug.library.internal.module.InstabugLocale;
 import com.instabug.library.invocation.InstabugInvocationEvent;
@@ -33,6 +36,7 @@ import com.instabug.reactlibrary.utils.ArrayUtil;
 import com.instabug.reactlibrary.utils.MapUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -212,10 +216,11 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
      * @param tags
      */
     @ReactMethod
-    public void appendTags(String tags) {
+    public void appendTags(ReadableArray tags) {
         try {
-            String[] result = tags.split(",");
-            mInstabug.addTags(result);
+            Object[] objectArray = ArrayUtil.toArray(tags);
+            String[] stringArray = Arrays.copyOf(objectArray, objectArray.length, String[].class);
+            mInstabug.addTags(stringArray);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -909,7 +914,7 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             Runnable preInvocationRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    preInvocationHandler.invoke();
+                    sendEvent(getReactApplicationContext(), "IBGpreInvocationHandler", null);
                 }
             };
             mInstabug.setPreInvocation(preInvocationRunnable);
@@ -933,7 +938,7 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             Runnable preSendingRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    preSendingHandler.invoke();
+                    sendEvent(getReactApplicationContext(), "IBGpreSendingHandler", null);
                 }
             };
             mInstabug.setPreSendingRunnable(preSendingRunnable);
@@ -957,7 +962,10 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             mInstabug.setOnSdkDismissedCallback(new OnSdkDismissedCallback() {
                 @Override
                 public void onSdkDismissed(DismissType issueState, Bug.Type bugType) {
-                    postInvocationHandler.invoke();
+                    WritableMap params = Arguments.createMap();
+                    params.putString("issueState", issueState.toString());
+                    params.putString("bugType", bugType.toString());
+                    sendEvent(getReactApplicationContext(), "IBGpostInvocationHandler", params);
                 }
             });
 
@@ -1008,7 +1016,6 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
         }
     }
 
-
     /**
      * Sets the runnable that gets executed just before showing any valid survey<br/>
      * WARNING: This runs on your application's main UI thread. Please do not include
@@ -1022,7 +1029,7 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             Runnable willShowSurveyRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    willShowSurveyHandler.invoke();
+                    sendEvent(getReactApplicationContext(), "IBGWillShowSurvey", null);
                 }
             };
             mInstabug.setPreShowingSurveyRunnable(willShowSurveyRunnable);
@@ -1044,7 +1051,7 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             Runnable didDismissSurveyRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    didDismissSurveyHandler.invoke();
+                    sendEvent(getReactApplicationContext(), "IBGDidDismissSurvey", null);
                 }
             };
             mInstabug.setAfterShowingSurveyRunnable(didDismissSurveyRunnable);
@@ -1115,12 +1122,41 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
             Runnable onNewMessageRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    onNewMessageHandler.invoke();
+                    sendEvent(getReactApplicationContext(), "IBGonNewMessageHandler", null);
                 }
             };
             mInstabug.setNewMessageHandler(onNewMessageRunnable);
         } catch (java.lang.Exception exception) {
             exception.printStackTrace();
+        }
+    }
+
+    /**
+     * @param enabled true to show success dialog after submitting a bug report
+     *
+     */
+    @ReactMethod
+    public void setSuccessDialogEnabled(boolean enabled) {
+        try {
+            mInstabug.setSuccessDialogEnabled(enabled);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set whether new in app notification received will play a small sound notification
+     * or not (Default is {@code false})
+     *
+     * @param shouldPlaySound desired state of conversation sounds
+     * @since 4.1.0
+     */
+    @ReactMethod
+    public void setEnableInAppNotificationSound(boolean shouldPlaySound) {
+        try {
+            mInstabug.setEnableInAppNotificationSound(shouldPlaySound);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -1232,6 +1268,14 @@ public class RNInstabugReactnativeModule extends ReactContextBaseJavaModule {
         }
     }
 
+    private void sendEvent(ReactApplicationContext reactContext,
+                        String eventName,
+                        @Nullable WritableMap params) {
+        reactContext
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit(eventName, params);
+    }
+    
     @Override
     public Map<String, Object> getConstants() {
         final Map<String, Object> constants = new HashMap<>();

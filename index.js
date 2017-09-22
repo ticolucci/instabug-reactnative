@@ -1,4 +1,4 @@
-import {NativeModules, NativeAppEventEmitter, Platform} from "react-native";
+import {NativeModules, NativeAppEventEmitter, DeviceEventEmitter, Platform} from "react-native";
 let {Instabug} = NativeModules;
 
 /**
@@ -95,7 +95,8 @@ module.exports = {
                 'IBGpreSendingHandler',
                 preSendingHandler
             );
-
+        } else {
+            DeviceEventEmitter.addListener('IBGpreSendingHandler', preSendingHandler);
         }
 
         Instabug.setPreSendingHandler(preSendingHandler);
@@ -115,6 +116,8 @@ module.exports = {
                 'IBGpreInvocationHandler',
                 preInvocationHandler
             );
+        } else {
+            DeviceEventEmitter.addListener('IBGpreInvocationHandler', preInvocationHandler);
         }
 
         Instabug.setPreInvocationHandler(preInvocationHandler);
@@ -137,6 +140,10 @@ module.exports = {
                     postInvocationHandler(payload['dismissType'], payload['reportType']);
                 }
             );
+        } else {
+            DeviceEventEmitter.addListener('IBGpostInvocationHandler', function(payload) {
+                postInvocationHandler(payload.issueState, payload.bugType);
+            });
         }
 
         Instabug.setPostInvocationHandler(postInvocationHandler);
@@ -316,7 +323,9 @@ module.exports = {
      * @param {color} primaryColor A color to set the UI elements of the SDK to.
      */
     setPrimaryColor: function (primaryColor) {
-        Instabug.setPrimaryColor(primaryColor);
+        if(Platform.OS == "ios") {
+            Instabug.setPrimaryColor(primaryColor);
+        }
     },
 
     /**
@@ -398,9 +407,11 @@ module.exports = {
                 'IBGonNewMessageHandler',
                 onNewMessageHandler
             );
+        } else {
+            DeviceEventEmitter.addListener('IBGonNewMessageHandler', onNewMessageHandler);
         }
 
-        Instabug.setOnNewMessageHandler(onNewMessgaeHandler);
+        Instabug.setOnNewMessageHandler(onNewMessageHandler);
 
     },
 
@@ -680,6 +691,8 @@ module.exports = {
                 'IBGWillShowSurvey',
                 willShowSurveyHandler
             );
+        } else {
+            DeviceEventEmitter.addListener('IBGWillShowSurvey', willShowSurveyHandler);
         }
 
         Instabug.setWillShowSurveyHandler(willShowSurveyHandler);
@@ -699,6 +712,8 @@ module.exports = {
                 'IBGDidDismissSurvey',
                 didDismissSurveyHandler
             );
+        } else {
+            DeviceEventEmitter.addListener('IBGDidDismissSurvey', didDismissSurveyHandler);
         }
 
         Instabug.setDidDismissSurveyHandler(didDismissSurveyHandler);
@@ -762,6 +777,27 @@ module.exports = {
     isRunningLive: function(runningLiveCallBack) {
         if (Platform.OS === 'ios') {
             Instabug.isRunningLive(runningLiveCallBack)
+        }
+    },
+
+    /**
+     * @param enabled true to show success dialog after submitting a bug report
+     * 
+     */
+    setSuccessDialogEnabled: function(enabled) {
+        Instabug.setSuccessDialogEnabled(enabled);
+    },
+
+    /**
+     * Set whether new in app notification received will play a small sound notification
+     * or not (Default is {@code false})
+     *
+     * @param shouldPlaySound desired state of conversation sounds
+     * @since 4.1.0
+     */
+    setEnableInAppNotificationSound: function(shouldPlaySound) {
+        if(Platform.OS === 'android') {
+            Instabug.setEnableInAppNotificationSound(shouldPlaySound);
         }
     },
 
